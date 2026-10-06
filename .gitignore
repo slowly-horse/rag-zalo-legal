@@ -1,0 +1,9 @@
+# Python environment
+.venv/
+
+# Python tooling
+.pytest_cache/
+
+
+# Downloaded/generated data
+data/raw/
