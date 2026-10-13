@@ -8,7 +8,7 @@ RAW_FILES := \
 	qrels/train.jsonl \
 	qrels/test.jsonl 
 
-.PHONY: fetch inspect sample
+.PHONY: fetch inspect sample profile
 
 fetch:
 	uv run hf download \
@@ -30,3 +30,5 @@ sample:
 	head -n 1 $(RAW_DIR)/qrels/train.jsonl \
 		| uv run python -m json.tool --no-ensure-ascii
 		
+profile:
+	uv run python scripts/profile_data.py
