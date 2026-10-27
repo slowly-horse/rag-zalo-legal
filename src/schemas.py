@@ -30,6 +30,14 @@ class LegalMetadata(BaseModel):
     parse_ok: bool = True
 
 
+class CorpusRecord(BaseModel):
+    """One document exactly as it is loaded from ``corpus.jsonl``."""
+
+    doc_id: str = Field(description="Value of the raw corpus `_id` field")
+    title: str = ""
+    text: str = ""
+
+
 class Passage(BaseModel):
     """One indexable unit of text."""
 
@@ -45,6 +53,21 @@ class Passage(BaseModel):
 class Query(BaseModel):
     query_id: str
     text: str
+
+
+class QrelSet(BaseModel):
+    """Relevance labels grouped as ``query_id -> {doc_id: score}``."""
+
+    name: str
+    labels: dict[str, dict[str, int]] = Field(default_factory=dict)
+
+    @property
+    def n_labels(self) -> int:
+        return sum(len(documents) for documents in self.labels.values())
+
+    @property
+    def query_ids(self) -> set[str]:
+        return set(self.labels)
 
 
 class GoldenExample(BaseModel):
