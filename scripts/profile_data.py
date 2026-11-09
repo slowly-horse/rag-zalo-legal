@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from collections import defaultdict
 import random
+import unicodedata
 
 
 def read_jsonl(path: str):
@@ -14,10 +15,12 @@ def read_jsonl(path: str):
             except json.JSONDecodeError as error:
                 print(f"JSON lỗi tại {path}:{line_number}: {error}")
 
+
 def percentile(values: list[int], ratio: float) -> int:
     ordered = sorted(values)
     index = round((len(ordered) -1) * ratio)
     return ordered[index]
+
 
 def profile_corpus() -> None:
     lengths = []
@@ -39,6 +42,7 @@ def profile_corpus() -> None:
     print("Độ dài phần trăm 50 - p50:", percentile(lengths, 0.50))
     print("Độ dài phần trăm 90 - p90:", percentile(lengths, 0.90))
     print("Độ dài phần trăm 99 - p99:", percentile(lengths, 0.99))
+
 
 def profile_qrels(split: str) -> None:
     path = f"data/raw/qrels/{split}.jsonl"
@@ -124,12 +128,48 @@ def export_empty_bodies() -> None:
     print(f"\nĐã ghi {output} với các văn bản rỗng (chỉ có title).")
 
 
+def inspect_normalization() -> None:
+    counts = {}
+
+    for field in ("title", "text"):
+        counts[field] = {
+            "not_nfc": 0,
+            "nbsp": 0,
+            "cr": 0,
+            "outer_whitespace": 0,
+        }
+
+    for row in read_jsonl("data/raw/corpus.jsonl"):
+        for field in ("title", "text"):
+            value = row.get(field) or ""
+
+            if value != unicodedata.normalize("NFC", value):
+                counts[field]["not_nfc"] += 1
+
+            if "\u00a0" in value:
+                counts[field]["nbsp"] += 1
+
+            if "\r" in value:
+                counts[field]["cr"] += 1
+
+            if value != value.strip():
+                counts[field]["outer_whitespace"] += 1
+
+    for field in ("title", "text"):
+        print(f"\nField: {field}")
+        print("Chưa ở dạng NFC:", counts[field]["not_nfc"])
+        print("Có khoảng trắng NBSP:", counts[field]["nbsp"])
+        print("Có ký tự CR:", counts[field]["cr"])
+        print("Có khoảng trắng ở hai đầu:",
+              counts[field]["outer_whitespace"])
+        
 def main() -> None:
     profile_corpus()
     profile_qrels("train")
     profile_qrels("test")
     inspect_empty_bodies(sample_size=10)
     export_empty_bodies()
+    inspect_normalization()
 
 if __name__ == "__main__":
     main()

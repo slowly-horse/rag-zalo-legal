@@ -17,7 +17,7 @@ from src.schemas import CorpusRecord, QrelSet, Query
 JsonObject = dict[str, Any]
 
 
-def read_jsonl(path: Path) -> Iterator[JsonObject]:
+def _read_jsonl(path: Path) -> Iterator[JsonObject]:
     """Yield one JSON object per non-empty line.
 
     Invalid JSON is reported with its file and line number instead of being
@@ -27,15 +27,12 @@ def read_jsonl(path: Path) -> Iterator[JsonObject]:
         for line_number, line in enumerate(handle, start=1):
             if not line.strip():
                 continue
-
             try:
                 row = json.loads(line)
             except json.JSONDecodeError as error:
                 raise ValueError(f"Invalid JSON at {path}:{line_number}") from error
-
             if not isinstance(row, dict):
                 raise ValueError(f"Expected a JSON object at {path}:{line_number}")
-
             yield row
 
 
@@ -51,7 +48,7 @@ def iter_corpus(path: Path, limit: int | None = None) -> Iterator[CorpusRecord]:
         raise ValueError("limit must be greater than or equal to 0")
 
     emitted = 0
-    for row in read_jsonl(path):
+    for row in _read_jsonl(path):
         if limit is not None and emitted >= limit:
             return
 
@@ -72,7 +69,7 @@ def load_queries(path: Path) -> tuple[dict[str, Query], int]:
     queries: dict[str, Query] = {}
     duplicates = 0
 
-    for row in read_jsonl(path):
+    for row in _read_jsonl(path):
         query_id = _identifier(row)
         if query_id is None:
             raise ValueError(f"Query row is missing `_id`: {row!r}")
@@ -93,7 +90,7 @@ def load_qrels(path: Path, *, name: str) -> QrelSet:
     """Load qrels as ``query_id -> {doc_id: relevance_score}``."""
     qrels = QrelSet(name=name)
 
-    for row in read_jsonl(path):
+    for row in _read_jsonl(path):
         query_id = row.get("query-id")
         doc_id = row.get("corpus-id")
 

@@ -31,7 +31,16 @@ class LegalMetadata(BaseModel):
 
 
 class CorpusRecord(BaseModel):
-    """One document exactly as it is loaded from ``corpus.jsonl``."""
+    """One document loaded from ``corpus.jsonl``.
+
+    The loader renames the raw ``_id`` field to ``doc_id``::
+
+        CorpusRecord(
+            doc_id="01/2009/tt-bnn+1",
+            title="Điều 1. Phạm vi áp dụng",
+            text="Thông tư này hướng dẫn...",
+        )
+    """
 
     doc_id: str = Field(description="Value of the raw corpus `_id` field")
     title: str = ""
@@ -51,12 +60,35 @@ class Passage(BaseModel):
 
 
 class Query(BaseModel):
+    """One search question loaded from ``queries.jsonl``.
+
+    Example::
+
+        Query(
+            query_id="0637bf82c8b290c7875c5bfddbf91df5",
+            text="Công an xã xử phạt lỗi không mang bằng lái xe có đúng không?",
+        )
+    """
+
     query_id: str
     text: str
 
 
 class QrelSet(BaseModel):
-    """Relevance labels grouped as ``query_id -> {doc_id: score}``."""
+    """Relevance labels grouped as ``query_id -> {doc_id: score}``.
+
+    One query may have more than one relevant document::
+
+        QrelSet(
+            name="train",
+            labels={
+                "query-1": {
+                    "document-1": 1,
+                    "document-2": 1,
+                }
+            },
+        )
+    """
 
     name: str
     labels: dict[str, dict[str, int]] = Field(default_factory=dict)
