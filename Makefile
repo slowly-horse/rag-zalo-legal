@@ -8,7 +8,7 @@ RAW_FILES := \
 	qrels/train.jsonl \
 	qrels/test.jsonl 
 
-.PHONY: fetch inspect sample profile
+.PHONY: fetch inspect sample profile test
 
 fetch:
 	uv run hf download \
@@ -32,3 +32,6 @@ sample:
 		
 profile:
 	uv run python scripts/profile_data.py
+
+test:
+	uv run python -m pytest src/tests/unit/test_clean.py -v
